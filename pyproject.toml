@@ -1,5 +1,5 @@
 [project]
-name = "tooling"
+name = "texty-tool"
 version = "0.1.0"
 description = "Just a collection of common scripts for tex+typst publishing and management needs in a bundled CLI system."
 readme = "README.md"
