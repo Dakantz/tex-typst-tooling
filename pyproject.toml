@@ -1,7 +1,7 @@
 [project]
 name = "tooling"
 version = "0.1.0"
-description = "Add your description here"
+description = "Just a collection of common scripts for tex+typst publishing and management needs in a bundled CLI system."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
