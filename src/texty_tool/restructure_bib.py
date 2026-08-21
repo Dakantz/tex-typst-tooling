@@ -1,13 +1,13 @@
+import re
 import time
 from pathlib import Path
+from typing import Annotated
 
 import bibtexparser
 import requests
 import tqdm
-from rdflib.plugins.stores.sparqlstore import SPARQLStore
 import typer
-import re
-
+from rdflib.plugins.stores.sparqlstore import SPARQLStore
 
 app = typer.Typer()
 
@@ -90,7 +90,7 @@ def __doi2bib(doi: str):
 
 
 @app.command()
-def doi2bib(doi: str):
+def doi2bib(doi: Annotated[str, typer.Argument()]):
     """
     Resolve a DOI to a BibTeX entry using DBLP and direct DOI resolution as fallback.
 
@@ -107,9 +107,9 @@ def doi2bib(doi: str):
 
 
 @app.command()
-def convert(
-    input_path: str = "references.bib",
-    output_path: str = "references_resolved.bib",
+def cleanup(
+    input_path: Annotated[str, typer.Argument()] = "references.bib",
+    output_path: Annotated[str, typer.Argument()] = "references_resolved.bib",
     remove_duplicates: bool = True,
     remove_issn: bool = True,
     remove_url: bool = True,

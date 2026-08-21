@@ -327,7 +327,7 @@ wheels = [
 ]
 
 [[package]]
-name = "tooling"
+name = "texty-tool"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -6,6 +6,7 @@ Written using Claude Code
 import re
 import sys
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -75,7 +76,10 @@ def render_typ(entries):
 
 
 @app.command()
-def convert_bib(input_path: str, output_path: str):
+def convert(
+    input_path: Annotated[str, typer.Argument()] = "acronyms.tex",
+    output_path: Annotated[str, typer.Argument()] = "acronyms.typ",
+):
     input_file = Path(input_path)
     output_file = Path(output_path)
     if not input_file.exists():

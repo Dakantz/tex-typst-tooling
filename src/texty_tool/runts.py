@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+from typing import Annotated
 
 import pymupdf
 import typer
@@ -8,7 +9,9 @@ app = typer.Typer()
 
 
 @app.command()
-def check_overhangs(pdf_path: str, threshhold: float = 0.25):
+def check_overhangs(
+    pdf_path: Annotated[str, typer.Argument()] = "main.pdf", threshhold: float = 0.25
+):
     """
     Check for overhanging text in a PDF file.
 
