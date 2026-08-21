@@ -16,7 +16,7 @@ texty-tool restructure-bib cleanup bibliography.bib
 ### Bibliography Cleanup
 
 ```sh
-texty-tool restructure-bib cleanup in.bib  out.bib [args]
+texty-tool restructure-bib cleanup in.bib  out.bib
 ```
 >  Convert a BibTeX file by resolving DOIs and reformatting entries.                                                                        
 ### Check Runts (small overhangs)
