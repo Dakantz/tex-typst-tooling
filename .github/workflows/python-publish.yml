@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload UV Package
+name: Test and Upload UV Package
 
 on:
   release:
@@ -37,7 +37,9 @@ jobs:
           # NOTE: put your own distribution build steps here.
           uv sync
           uv build
-
+      - name: Run Tests
+        run: |
+          uv run pytest
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:

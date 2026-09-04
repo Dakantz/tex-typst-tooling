@@ -1,18 +1,22 @@
 [project]
 name = "texty-tool"
-version = "0.2.0"
+version = "0.2.1"
 description = "Just a collection of common scripts for tex+typst publishing and management needs in a bundled CLI system."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "bibtexparser>=1.4.4",
+    "pdfminer-six>=20260107",
     "pymupdf>=1.28.2",
+    "pytest>=9.1.1",
     "rdflib>=7.6.0",
     "requests>=2.34.2",
     "tqdm>=4.70.0",
     "typer>=0.27.1",
 ]
 
+[tool.uv]
+package = true
 
 [project.scripts]
 tex-typst-helper = "texty_tool.main:app"

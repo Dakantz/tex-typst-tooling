@@ -1,9 +1,9 @@
-# `texty-tool`
+# CLI
 
 **Usage**:
 
 ```console
-$ texty-tool [OPTIONS] COMMAND [ARGS]...
+$ [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -18,15 +18,16 @@ $ texty-tool [OPTIONS] COMMAND [ARGS]...
 * `restructure-bib`: Restructure a BibTeX file by resolving...
 * `runts`: Check for overhanging text in a PDF file.
 * `prepare-submission`: Generate additional material ZIP files for...
+* `check-fonts`: Check the font usage in a PDF file.
 
-## `texty-tool convert-acronyms`
+## `convert-acronyms`
 
 Convert acronyms.tex (\newacronym entries) into a typst entry-list (acronyms.typ).
 
 **Usage**:
 
 ```console
-$ texty-tool convert-acronyms [OPTIONS] COMMAND [ARGS]...
+$ convert-acronyms [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -37,12 +38,12 @@ $ texty-tool convert-acronyms [OPTIONS] COMMAND [ARGS]...
 
 * `convert`
 
-### `texty-tool convert-acronyms convert`
+### `convert-acronyms convert`
 
 **Usage**:
 
 ```console
-$ texty-tool convert-acronyms convert [OPTIONS] [input_path] [output_path]
+$ convert-acronyms convert [OPTIONS] [input_path] [output_path]
 ```
 
 **Arguments**:
@@ -54,14 +55,14 @@ $ texty-tool convert-acronyms convert [OPTIONS] [input_path] [output_path]
 
 * `--help`: Show this message and exit.
 
-## `texty-tool restructure-bib`
+## `restructure-bib`
 
 Restructure a BibTeX file by resolving DOIs and reformatting entries.
 
 **Usage**:
 
 ```console
-$ texty-tool restructure-bib [OPTIONS] COMMAND [ARGS]...
+$ restructure-bib [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -73,7 +74,7 @@ $ texty-tool restructure-bib [OPTIONS] COMMAND [ARGS]...
 * `doi2bib`: Resolve a DOI to a BibTeX entry using DBLP...
 * `cleanup`: Convert a BibTeX file by resolving DOIs...
 
-### `texty-tool restructure-bib doi2bib`
+### `restructure-bib doi2bib`
 
 Resolve a DOI to a BibTeX entry using DBLP and direct DOI resolution as fallback.
 
@@ -83,7 +84,7 @@ Args:
 **Usage**:
 
 ```console
-$ texty-tool restructure-bib doi2bib [OPTIONS] {doi}
+$ restructure-bib doi2bib [OPTIONS] {doi}
 ```
 
 **Arguments**:
@@ -94,7 +95,7 @@ $ texty-tool restructure-bib doi2bib [OPTIONS] {doi}
 
 * `--help`: Show this message and exit.
 
-### `texty-tool restructure-bib cleanup`
+### `restructure-bib cleanup`
 
 Convert a BibTeX file by resolving DOIs and reformatting entries.
 
@@ -105,7 +106,7 @@ Args:
 **Usage**:
 
 ```console
-$ texty-tool restructure-bib cleanup [OPTIONS] [input_path] [output_path]
+$ restructure-bib cleanup [OPTIONS] [input_path] [output_path]
 ```
 
 **Arguments**:
@@ -124,14 +125,14 @@ $ texty-tool restructure-bib cleanup [OPTIONS] [input_path] [output_path]
 * `--preserve-title-capitalization / --no-preserve-title-capitalization`: [default: preserve-title-capitalization]
 * `--help`: Show this message and exit.
 
-## `texty-tool runts`
+## `runts`
 
 Check for overhanging text in a PDF file.
 
 **Usage**:
 
 ```console
-$ texty-tool runts [OPTIONS] COMMAND [ARGS]...
+$ runts [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -142,7 +143,7 @@ $ texty-tool runts [OPTIONS] COMMAND [ARGS]...
 
 * `check-overhangs`: Check for overhanging text in a PDF file.
 
-### `texty-tool runts check-overhangs`
+### `runts check-overhangs`
 
 Check for overhanging text in a PDF file.
 
@@ -153,7 +154,7 @@ Args:
 **Usage**:
 
 ```console
-$ texty-tool runts check-overhangs [OPTIONS] [pdf_path]
+$ runts check-overhangs [OPTIONS] [pdf_path]
 ```
 
 **Arguments**:
@@ -165,14 +166,14 @@ $ texty-tool runts check-overhangs [OPTIONS] [pdf_path]
 * `--threshhold <float>`: [default: 0.25]
 * `--help`: Show this message and exit.
 
-## `texty-tool prepare-submission`
+## `prepare-submission`
 
 Generate additional material ZIP files for the current directory.
 
 **Usage**:
 
 ```console
-$ texty-tool prepare-submission [OPTIONS] COMMAND [ARGS]...
+$ prepare-submission [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -184,7 +185,7 @@ $ texty-tool prepare-submission [OPTIONS] COMMAND [ARGS]...
 * `additional-material`: Generate a ZIP file containing additional...
 * `sources`: Generate a ZIP file containing source...
 
-### `texty-tool prepare-submission additional-material`
+### `prepare-submission additional-material`
 
 Generate a ZIP file containing additional material for the project.
 
@@ -195,7 +196,7 @@ Args:
 **Usage**:
 
 ```console
-$ texty-tool prepare-submission additional-material [OPTIONS]
+$ prepare-submission additional-material [OPTIONS]
 ```
 
 **Options**:
@@ -204,7 +205,7 @@ $ texty-tool prepare-submission additional-material [OPTIONS]
 * `--output-zip <str>`: [default: additional_material.zip]
 * `--help`: Show this message and exit.
 
-### `texty-tool prepare-submission sources`
+### `prepare-submission sources`
 
 Generate a ZIP file containing source files for the project.
 
@@ -218,7 +219,7 @@ Args:
 **Usage**:
 
 ```console
-$ texty-tool prepare-submission sources [OPTIONS]
+$ prepare-submission sources [OPTIONS]
 ```
 
 **Options**:
@@ -230,4 +231,39 @@ $ texty-tool prepare-submission sources [OPTIONS]
 * `--verify / --no-verify`: [default: no-verify]
 * `--force / --no-force`: [default: no-force]
 * `--rerun / --no-rerun`: [default: no-rerun]
+* `--help`: Show this message and exit.
+
+## `check-fonts`
+
+Check the font usage in a PDF file.
+
+**Usage**:
+
+```console
+$ check-fonts [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `check-font-usage`
+
+### `check-fonts check-font-usage`
+
+**Usage**:
+
+```console
+$ check-fonts check-font-usage [OPTIONS] {pdf_path}
+```
+
+**Arguments**:
+
+* `pdf_path`: Path to the PDF file to check.  [required]
+
+**Options**:
+
+* `--pages-to-check <str>`: Comma-separated list of page numbers to check (0-indexed). Checks all pages if not specified.
 * `--help`: Show this message and exit.
