@@ -14,6 +14,12 @@ dependencies = [
     "tqdm>=4.70.0",
     "typer>=0.27.1",
 ]
+authors = [{ name = "Benedikt Kantz", email = "benedikt.kantz@tugraz.at" }]
+license = "MIT"
+
+[project.urls]
+Repository = "https://github.com/Dakantz/tex-typst-tooling"
+
 
 [tool.uv]
 package = true
