@@ -2,7 +2,7 @@ import pytest
 from typer.testing import CliRunner
 
 from texty_tool.main import app
-from texty_tool.restructure_bib import resolve_from_doi_dblp
+from texty_tool.restructure_bib import resolve_from_doi_dblp, cleanup_bibtex_entry
 import os
 
 runner = CliRunner()
@@ -24,6 +24,13 @@ def test_editor_and_booktitle():
     entry = resolve_from_doi_dblp(doi)
     assert "editor" in entry
     assert "booktitle" in entry
+
+
+def test_unicode():
+    doi = "10.1145/3534540.3534695"
+    entry = resolve_from_doi_dblp(doi)
+    clean_entry = cleanup_bibtex_entry(entry)
+    assert "\\'" in clean_entry["author"]
 
 
 # def test_doi_with_ampersand():

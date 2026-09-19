@@ -218,6 +218,65 @@ def resolve_from_doi_dblp(doi: str) -> dict:
     raise ValueError(f"Failed to resolve DOI: {doi}")
 
 
+def cleanup_bibtex_entry(
+    _entry: dict,
+    remove_duplicates=True,
+    remove_issn=True,
+    remove_url=True,
+    remove_isbn=True,
+    remove_pages=False,
+    remove_editor=True,
+    preserve_title_capitalization=True,
+) -> dict:
+    entry = _entry.copy()
+    for k, v in _entry.items():
+        if "&amp;" in v:
+            entry[k] = v.replace("&amp;", "\\&")
+        if (
+            isinstance(v, str)
+            and k not in ["ID", "ENTRYTYPE", "doi"]
+            and "{\\" not in v
+        ):
+            entry[k] = unicode_to_latex(v, unknown_char_policy="ignore")
+        if "\\&amp;" in entry[k]:
+            entry[k] = entry[k].replace("\\&amp;", "\\&")
+        if (
+            remove_url
+            and ("doi" in entry or "issn" in entry or "isbn" in entry)
+            and "url" in entry
+        ):
+            del entry["url"]
+        if remove_issn and "issn" in entry and "isbn" in entry:
+            del entry["issn"]
+        if remove_issn and "issn" in entry and "doi" in entry:
+            del entry["issn"]
+        if remove_isbn and "isbn" in entry and "doi" in entry:
+            del entry["isbn"]
+        if remove_editor and "editor" in entry and "author" in entry:
+            del entry["editor"]
+        if remove_pages and "pages" in entry:
+            del entry["pages"]
+        if preserve_title_capitalization and "title" in entry:
+            entry["title"] = (
+                f"{{{entry['title']}}}"  # Wrap title in extra braces to preserve capitalization
+            )
+            if "booktitle" in entry:
+                entry["booktitle"] = f"{{{entry['booktitle']}}}"
+            if "journal" in entry:
+                entry["journal"] = f"{{{entry['journal']}}}"
+            if "publisher" in entry:
+                entry["publisher"] = f"{{{entry['publisher']}}}"
+        # remove empty authors
+        if "author" in entry and not entry["author"].strip():
+            entry["author"] = re.sub(r"and\s*and", "", entry["author"]).strip()
+            entry["author"] = re.sub(r"and\s*$", "", entry["author"]).strip()
+            entry["author"] = re.sub(r"^\s*and", "", entry["author"]).strip()
+        entry["title"] = re.sub(
+            r"<\/?\w+>", "", entry["title"]
+        )  # Remove <i> and similar tags
+    return entry
+
+
 def resolve_from_doi_direct(doi: str) -> dict:
     url = f"https://doi.org/{doi}"
     try:
@@ -347,51 +406,27 @@ def cleanup(
                         f"Warning: Could not resolve DOI {entry['doi']} for entry {entry['ID']}. Keeping original entry."
                     )
             resolved_entries.append(resolved_entry)
-
+    cleaned_entries = []
     for entry in resolved_entries:
-        for k, v in entry.items():
-            if "&amp;" in v:
-                entry[k] = v.replace("&amp;", "\\&")
-            if isinstance(v, str):
-                entry[k] = unicode_to_latex(v)
-            if "\\&amp;" in entry[k]:
-                entry[k] = entry[k].replace("\\&amp;", "\\&")
         try:
-            if (
-                remove_url
-                and ("doi" in entry or "issn" in entry or "isbn" in entry)
-                and "url" in entry
-            ):
-                del entry["url"]
-            if remove_issn and "issn" in entry and "isbn" in entry:
-                del entry["issn"]
-            if remove_issn and "issn" in entry and "doi" in entry:
-                del entry["issn"]
-            if remove_isbn and "isbn" in entry and "doi" in entry:
-                del entry["isbn"]
-            if remove_editor and "editor" in entry and "author" in entry:
-                del entry["editor"]
-            if remove_pages and "pages" in entry:
-                del entry["pages"]
-            if preserve_title_capitalization and "title" in entry:
-                entry["title"] = (
-                    f"{{{entry['title']}}}"  # Wrap title in extra braces to preserve capitalization
-                )
-                if "booktitle" in entry:
-                    entry["booktitle"] = f"{{{entry['booktitle']}}}"
-                if "journal" in entry:
-                    entry["journal"] = f"{{{entry['journal']}}}"
-                if "publisher" in entry:
-                    entry["publisher"] = f"{{{entry['publisher']}}}"
-            entry["title"] = re.sub(
-                r"<\/?\w+>", "", entry["title"]
-            )  # Remove <i> and similar tags
+            cleaned_entry = cleanup_bibtex_entry(
+                entry,
+                remove_duplicates=remove_duplicates,
+                remove_issn=remove_issn,
+                remove_url=remove_url,
+                remove_isbn=remove_isbn,
+                remove_pages=remove_pages,
+                remove_editor=remove_editor,
+                preserve_title_capitalization=preserve_title_capitalization,
+            )
+            cleaned_entries.append(cleaned_entry)
         except Exception as e:
             print(
                 f"Error processing entry {entry.get('ID', 'unknown')} / {entry.get('title', 'unknown')}: {e}"
             )
             print(traceback.format_exc())
+            cleaned_entries.append(entry)  # Keep the original entry if cleanup fails
             continue
     with open(output_file, "w") as bibtex_file:
-        bib_database.entries = resolved_entries
+        bib_database.entries = cleaned_entries
         bibtexparser.dump(bib_database, bibtex_file)
