@@ -33,6 +33,13 @@ def test_unicode():
     assert "\\'" in clean_entry["author"]
 
 
+def test_empty_authors():
+    doi = "10.1109/TKDE.2019.2909204"
+    entry = resolve_from_doi_dblp(doi)
+    clean_entry = cleanup_bibtex_entry(entry)
+    assert "and  and" not in clean_entry["author"]
+
+
 # def test_doi_with_ampersand():
 #     doi = "10.1016/j.ipm.2022.103026"
 #     entry = resolve_from_doi_dblp(doi)

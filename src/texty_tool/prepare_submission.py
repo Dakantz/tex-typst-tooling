@@ -113,17 +113,21 @@ def sources(
     latexmk: Annotated[
         bool, typer.Option(help="Include latexmk touched files in the ZIP file.")
     ] = True,
-    main_file: Annotated[
-        str, typer.Option(help="Main LaTeX file to compile for verification.")
-    ] = "main.tex",
     tikz_external_dir: str = "tikz",
     tmp_dir: str = "temp_sources",
+    tmp_comments_dir: str = "temp_comments",
     tmp_build_dir: str = "temp_build",
-    output_zip: str = "sources.zip",
     verify: bool = False,
     force: bool = False,
     rerun: bool = False,
     flatten: bool = False,
+    rm_comments: bool = True,
+    main_file: Annotated[
+        str, typer.Option(help="Main file to start compilation with.")
+    ] = "main.tex",
+    output_zip: Annotated[
+        str | None, typer.Option(help="Output ZIP file name.")
+    ] = None,
 ):
     """
     Generate a ZIP file containing source files for the project.
@@ -138,7 +142,13 @@ def sources(
         rerun (bool): Rerun the LaTeX compilation for verification.
         flatten (bool): Flatten the directory structure in the ZIP file (Useful for submissions to conferences/journals that require a flat structure, e.g. Elsevier).
     """
-
+    if output_zip is None:
+        name = "sources"
+        if flatten:
+            name += "_flattened"
+        if rm_comments:
+            name += "_no_comments"
+        output_zip = f"{name}.zip"
     output_zip_path = Path(output_zip)
     if output_zip_path.exists():
         if not force:
@@ -149,10 +159,14 @@ def sources(
         print(f"Output file {output_zip} already exists. Overwriting it.")
     if input_files is None:
         input_files = ["main.tex", "abstract.tex", "*/.gitkeep"]
-
+    if isinstance(input_files, str):
+        input_files = input_files.split(",")
+    input_files_expanded = []
+    for i_f in input_files:
+        input_files_expanded.extend(i_f.split(","))
     # 1. Collect all input files based on the provided patterns
     _input_files: list[Path] = []
-    for file in input_files:
+    for file in input_files_expanded:
         print(f"Processing input file/pattern: {file}")
         globbed_files = glob.glob(file, recursive=True)
         _input_files.extend(globbed_files)
@@ -187,6 +201,7 @@ def sources(
                         input_file = line.split()[1]
                         if os.path.exists(input_file):
                             _input_files.append(Path(input_file))
+    zip_file_map = {file: Path(file) for file in set(_input_files)}
     # 3. Flatten the directory structure if requested
     if flatten:
         print("Flattening the directory structure in the ZIP file.")
@@ -199,13 +214,16 @@ def sources(
             tikz_temp_dir.mkdir(parents=True, exist_ok=True)
 
         unflattened_files = [f for f in set(_input_files) if f.is_file()]
+
         mapped_file = {
             file: temp_dir / ("_".join(file.parts)) for file in set(unflattened_files)
         }
         print(f"Flattening {len(unflattened_files)} files into {temp_dir}.")
 
         _input_files = list(mapped_file.values())
-
+        zip_file_map = {
+            dest_file: Path(dest_file.name) for file, dest_file in mapped_file.items()
+        }
         for file, dest_file in mapped_file.items():
             print(f"\t-> Copying {file} to {dest_file}.")
             shutil.copy(file, dest_file)
@@ -260,26 +278,65 @@ def sources(
                 with open(dest_file, "w", errors="ignore") as f:
                     f.write(content)
 
-    print(f"Creating ZIP file {output_zip} with {len(set(_input_files))} unique files.")
+    if rm_comments:
+        print("Removing comments from the source files in the ZIP file.")
+        temp_comments_dir = Path(tmp_comments_dir)
+        shutil.rmtree(temp_comments_dir, ignore_errors=True)
+        temp_comments_dir.mkdir(parents=True, exist_ok=True)
+        for file, arcname in zip_file_map.items():
+            dest_file = temp_comments_dir / file
+            dest_file.parent.mkdir(parents=True, exist_ok=True)
+            print(f"\t-> Copying {file} to {dest_file} for comment removal.")
+            assert file.stem == dest_file.stem, (
+                f"File {file} and destination {dest_file} have different suffixes (Comment removal)."
+            )
+            shutil.copy(file, dest_file)
+        zip_file_map = {
+            temp_comments_dir / file: arcname for file, arcname in zip_file_map.items()
+        }
+        for file in zip_file_map:
+            if file.suffix not in [".tex", ".sty", ".cls"]:
+                print(f"\t-> Skipping comment removal for {file}.")
+                continue
+            print(f"\t-> Removing comments from {file}.")
+
+            with open(file, "r", errors="ignore", encoding="utf-8") as f:
+                content = f.read()
+                # Remove comments (lines starting with %)
+            content_no_comments = re.sub(r"^\\n\s+%.*", "", content)
+            content_no_comments = re.sub(r"(?<!\\)%.*", "", content_no_comments)
+            with open(file, "w", errors="ignore") as f_out:
+                f_out.write(content_no_comments)
+
+    print(f"Creating ZIP file {output_zip} with {len(set(zip_file_map))} unique files.")
     with zipfile.ZipFile(output_zip_path, "w") as zipf:
-        for file in set(_input_files):
-            print(f"Adding {file} to the ZIP archive.")
-            if flatten:
-                zipf.write(file, file.name)
-            else:
-                zipf.write(file, file)
+        for file, dest_file in zip_file_map.items():
+            assert file.exists(), (
+                f"File {file} does not exist and cannot be added to the ZIP."
+            )
+            assert file.suffix == dest_file.suffix, (
+                f"File {file} and destination {dest_file} have different suffixes."
+            )
+            if not flatten:
+                assert file.name == dest_file.name, (
+                    f"File {file} and destination {dest_file} have different names."
+                )
+
+            print(f"Adding {file} as {dest_file} to the ZIP archive.")
+            zipf.write(file, dest_file)
     if verify:
         print(
             "Verifying the integrity of the ZIP file & try building the main.tex file with the sources:"
         )
+        main_file = Path(main_file).stem
         if rerun:
             resp = subprocess.run(
-                "latexmk -f -shell-escape -pdf -c  main",
+                f"latexmk -f -shell-escape -pdf -c  {main_file}",
                 cwd=".",
                 shell=True,
             )
             resp = subprocess.run(
-                "latexmk -f -shell-escape -pdf main",
+                f"latexmk -f -shell-escape -pdf {main_file}",
                 cwd=".",
                 shell=True,
             )
@@ -292,7 +349,7 @@ def sources(
             zipf.extractall(temp_build_dir)
 
             resp = subprocess.run(
-                "latexmk -f -shell-escape -pdf  main",
+                f"latexmk -f -shell-escape -pdf  {main_file}",
                 cwd=temp_build_dir,
                 shell=True,
             )

@@ -257,18 +257,18 @@ def cleanup_bibtex_entry(
         if remove_pages and "pages" in entry:
             del entry["pages"]
         if preserve_title_capitalization and "title" in entry:
-            entry["title"] = (
-                f"{{{entry['title']}}}"  # Wrap title in extra braces to preserve capitalization
-            )
-            if "booktitle" in entry:
-                entry["booktitle"] = f"{{{entry['booktitle']}}}"
-            if "journal" in entry:
-                entry["journal"] = f"{{{entry['journal']}}}"
-            if "publisher" in entry:
-                entry["publisher"] = f"{{{entry['publisher']}}}"
-        # remove empty authors
-        if "author" in entry and not entry["author"].strip():
-            entry["author"] = re.sub(r"and\s*and", "", entry["author"]).strip()
+            preserving_fields = ["title", "booktitle", "journal", "publisher", "series"]
+            for field in preserving_fields:
+                if (
+                    field in entry
+                    and not entry[field].startswith("{")
+                    and not entry[field].endswith("}")
+                ):
+                    entry[field] = (
+                        f"{{{entry[field]}}}"  # Wrap in extra braces to preserve capitalization
+                    )
+        if "author" in entry:
+            entry["author"] = re.sub(r"and\s*and", "and", entry["author"]).strip()
             entry["author"] = re.sub(r"and\s*$", "", entry["author"]).strip()
             entry["author"] = re.sub(r"^\s*and", "", entry["author"]).strip()
         entry["title"] = re.sub(
