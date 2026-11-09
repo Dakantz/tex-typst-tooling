@@ -1,11 +1,11 @@
 [project]
 name = "texty-tool"
-version = "0.2.3"
+version = "0.2.4"
 description = "Just a collection of common scripts for tex+typst publishing and management needs in a bundled CLI system."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "bibtexparser>=1.4.4",
+    "bibtexparser>=1.4.4,<2.0.0",
     "pandas>=2.3.3",
     "pdfminer-six>=20260107",
     "pylatexenc>=2.11",
