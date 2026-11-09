@@ -62,7 +62,7 @@ def test_e2e_ipm():
 
     # read generated bib file and check for expected entries
     with open("tests/references_resolved.bib", "r") as f:
-        bib_database = bibtexparser.load(f)
+        bib_database = bibtexparser.parse_string(f.read())
         for entry in bib_database.entries:
             if "journal" in entry:
                 assert "amp;" not in entry["journal"]  # check that & is not escaped

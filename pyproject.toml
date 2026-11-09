@@ -5,7 +5,7 @@ description = "Just a collection of common scripts for tex+typst publishing and 
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "bibtexparser>=1.4.4,<2.0.0",
+    "bibtexparser>=2.1.0",
     "pandas>=2.3.3",
     "pdfminer-six>=20260107",
     "pylatexenc>=2.11",

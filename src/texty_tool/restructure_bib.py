@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Annotated
 
 import bibtexparser
+import bibtexparser.model
+import bibtexparser.writer
 import pandas as pd
 import requests
 import tqdm
@@ -14,6 +16,7 @@ from pylatexenc.latexencode import unicode_to_latex
 from rdflib.plugins.stores.sparqlstore import SPARQLStore
 from rdflib.query import Result
 from rdflib.term import Literal, URIRef
+
 
 app = typer.Typer()
 
@@ -120,6 +123,29 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     return keys
 
 
+def entry_from_dict(entry_dict: dict) -> bibtexparser.model.Entry:
+    """
+    Convert a dictionary to a BibTeX entry.
+
+    Args:
+        entry_dict (dict): A dictionary containing BibTeX fields.
+
+    Returns:
+        bibtexparser.model.Entry: A BibTeX entry object.
+    """
+    fields = [
+        bibtexparser.model.Field(k, v)
+        for k, v in entry_dict.items()
+        if k not in ["ID", "ENTRYTYPE"]
+    ]
+    entry = bibtexparser.model.Entry(
+        entry_type=entry_dict.get("ENTRYTYPE", "article"),
+        key=entry_dict.get("ID", ""),
+        fields=fields,
+    )
+    return entry
+
+
 def resolve_from_doi_dblp(doi: str) -> dict:
 
     try:
@@ -211,15 +237,15 @@ def resolve_from_doi_dblp(doi: str) -> dict:
                 if dblp_key in partOf_keys:
                     entry[bibtex_key] = str(partOf_keys.get(dblp_key, ""))
         assert "title" in entry, f"Missing title for DOI {doi}"
-
-        return entry
+        entry_bib = entry_from_dict(entry)
+        return entry_bib
     except Exception as e:
         print(f"Error resolving DOI {doi} from DBLP: {e}")
     raise ValueError(f"Failed to resolve DOI: {doi}")
 
 
 def cleanup_bibtex_entry(
-    _entry: dict,
+    _entry: bibtexparser.model.Entry,
     remove_duplicates=True,
     remove_issn=True,
     remove_url=True,
@@ -227,8 +253,8 @@ def cleanup_bibtex_entry(
     remove_pages=False,
     remove_editor=True,
     preserve_title_capitalization=True,
-) -> dict:
-    entry = _entry.copy()
+) -> bibtexparser.model.Entry:
+    entry = {k: v for k, v in _entry.items()}
     for k, v in _entry.items():
         if "&amp;" in v:
             entry[k] = v.replace("&amp;", "\\&")
@@ -236,6 +262,7 @@ def cleanup_bibtex_entry(
             isinstance(v, str)
             and k not in ["ID", "ENTRYTYPE", "doi"]
             and "{\\" not in v
+            and not (v.startswith("{") and v.endswith("}"))
         ):
             entry[k] = unicode_to_latex(v, unknown_char_policy="ignore")
         if "\\&amp;" in entry[k]:
@@ -274,7 +301,8 @@ def cleanup_bibtex_entry(
         entry["title"] = re.sub(
             r"<\/?\w+>", "", entry["title"]
         )  # Remove <i> and similar tags
-    return entry
+    rebuild_entry = entry_from_dict(entry)
+    return rebuild_entry
 
 
 def resolve_from_doi_direct(doi: str) -> dict:
@@ -371,7 +399,7 @@ def cleanup(
         )
     resolved_entries = []
     with open(bib_file) as bibtex_file:
-        bib_database = bibtexparser.load(bibtex_file)
+        bib_database = bibtexparser.parse_string(bibtex_file.read())
         entries = bib_database.entries
         entries_filtered = entries.copy()
         if remove_duplicates:
@@ -428,5 +456,8 @@ def cleanup(
             cleaned_entries.append(entry)  # Keep the original entry if cleanup fails
             continue
     with open(output_file, "w") as bibtex_file:
-        bib_database.entries = cleaned_entries
-        bibtexparser.dump(bib_database, bibtex_file)
+        lib_database = bibtexparser.Library()
+        lib_database.add(cleaned_entries)
+
+        lib_str = bibtexparser.write_string(lib_database)
+        bibtex_file.write(lib_str)
